@@ -1,1 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe with Cool Animations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            position: relative;
+        }
 
+        .footer {
+            padding: 20px;
+            text-align: center;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .footer .copyright {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .footer a {
+            text-decoration: none;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #ff9800;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s;
+            border: 2px solid #333;
+            border-radius: 10px;
+        }
+
+        .cell:hover {
+            background-color: #ffeb3b;
+            transform: scale(1.1);
+        }
+
+        .cell:active {
+            background-color: #ff9800;
+        }
+
+        .win-animation {
+            animation: winBlink 1s infinite;
+        }
+
+        @keyframes winBlink {
+            0% { background-color: #4CAF50; }
+            50% { background-color: #8BC34A; }
+            100% { background-color: #4CAF50; }
+        }
+
+        .lose-animation {
+            animation: loseFade 0.5s infinite;
+        }
+
+        @keyframes loseFade {
+            0% { background-color: #f44336; }
+            50% { background-color: #e57373; }
+            100% { background-color: #f44336; }
+        }
+
+        .message {
+            margin: 20px;
+            font-size: 1.5rem;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        select {
+            padding: 5px;
+            margin: 20px;
+            font-size: 1rem;
+        }
+
+        /* Firework animation */
+        .firework {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-color: transparent;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: explode 1s forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(2); opacity: 0.5; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic Tac Toe</h1>
+    
+    <div>
+        <label for="difficulty">Choose difficulty: </label>
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+
+    <div class="board">
+        <div class="cell" id="0"></div>
+        <div class="cell" id="1"></div>
+        <div class="cell" id="2"></div>
+        <div class="cell" id="3"></div>
+        <div class="cell" id="4"></div>
+        <div class="cell" id="5"></div>
+        <div class="cell" id="6"></div>
+        <div class="cell" id="7"></div>
+        <div class="cell" id="8"></div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <button onclick="restartGame()">Restart Game</button>
+
+    <script>
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let human = 'X';
+        let bot = 'O';
+        let currentPlayer = human;
+        let difficulty = 'easy';
+
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', handleClick);
+        });
+
+        document.getElementById('difficulty').addEventListener('change', function() {
+            difficulty = this.value;
+        });
+
+        function handleClick(event) {
+            const cell = event.target;
+            const id = cell.id;
+
+            if (board[id] === '') {
+                board[id] = human;
+                cell.textContent = human;
+                currentPlayer = bot;
+
+                if (!checkWin(human) && !isBoardFull()) {
+                    botMove();
+                }
+
+                if (checkWin(human)) {
+                    endGame("You win!", "win-animation", id);
+                } else if (checkWin(bot)) {
+                    endGame("Bot wins!", "lose-animation");
+                } else if (isBoardFull()) {
+                    document.getElementById('message').textContent = "It's a draw!";
+                }
+            }
+        }
+
+        function botMove() {
+            let move;
+            if (difficulty === 'easy') {
+                move = randomMove();
+            } else if (difficulty === 'medium') {
+                move = mediumMove();
+            } else if (difficulty === 'hard') {
+                move = minimax(board, bot).index;
+            }
+
+            board[move] = bot;
+            document.getElementById(move).textContent = bot;
+            currentPlayer = human;
+
+            if (checkWin(bot)) {
+                endGame("Bot wins!", "lose-animation");
+            } else if (isBoardFull()) {
+                document.getElementById('message').textContent = "It's a draw!";
+            }
+        }
+
+        function randomMove() {
+            let available = board.map((val, index) => val === '' ? index : null).filter(val => val !== null);
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        function mediumMove() {
+            for (let i = 0; i < board.length; i++) {
+                let copy = [...board];
+                if (copy[i] === '') {
+                    copy[i] = bot;
+                    if (checkWin(bot, copy)) return i;
+                }
+            }
+            for (let i = 0; i < board.length; i++) {
+                let copy = [...board];
+                if (copy[i] === '') {
+                    copy[i] = human;
+                    if (checkWin(human, copy)) return i;
+                }
+            }
+            return randomMove();
+        }
+
+        function minimax(newBoard, player) {
+            const emptySpots = newBoard.map((val, index) => val === '' ? index : null).filter(val => val !== null);
+            
+            if (checkWin(human, newBoard)) return { score: -10 };
+            if (checkWin(bot, newBoard)) return { score: 10 };
+            if (emptySpots.length === 0) return { score: 0 };
+
+            const moves = [];
+            for (let i = 0; i < emptySpots.length; i++) {
+                const move = {};
+                move.index = emptySpots[i];
+                newBoard[emptySpots[i]] = player;
+
+                if (player === bot) {
+                    const result = minimax(newBoard, human);
+                    move.score = result.score;
+                } else {
+                    const result = minimax(newBoard, bot);
+                    move.score = result.score;
+                }
+
+                newBoard[emptySpots[i]] = '';
+                moves.push(move);
+            }
+
+            let bestMove;
+            if (player === bot) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score > bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    if (moves[i].score < bestScore) {
+                        bestScore = moves[i].score;
+                        bestMove = i;
+                    }
+                }
+            }
+            return moves[bestMove];
+        }
+
+        function checkWin(player, testBoard = board) {
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]              // Diagonals
+            ];
+            return winConditions.some(condition => condition.every(index => testBoard[index] === player));
+        }
+
+        function isBoardFull() {
+            return board.every(cell => cell !== '');
+        }
+
+        function endGame(message, animationClass, winningCellId = null) {
+            document.getElementById('message').textContent = message;
+
+            if (winningCellId !== null) {
+                const winningCells = getWinningCells(human);
+                winningCells.forEach(index => {
+                    const cell = document.getElementById(index);
+                    cell.classList.add('win-animation');
+                    cell.style.backgroundColor = 'blue'; 
+                    createFirework(cell);
+                });
+            }
+
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                if (board[index] !== '') {
+                    cell.classList.add(animationClass);
+                }
+            });
+        }
+
+        function getWinningCells(player) {
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]              // Diagonals
+            ];
+
+            for (const condition of winConditions) {
+                if (condition.every(index => board[index] === player)) {
+                    return condition;
+                }
+            }
+            return [];
+        }
+
+        function createFirework(cell) {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = `${cell.offsetLeft + 25}px`;
+            firework.style.top = `${cell.offsetTop + 25}px`; 
+            document.body.appendChild(firework);
+
+            setTimeout(() => {
+                firework.remove(); 
+            }, 1000);
+        }
+
+        function restartGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('win-animation', 'lose-animation');
+                cell.style.backgroundColor = '#fff';
+            });
+            document.getElementById('message').textContent = '';
+            currentPlayer = human;
+        }
+    </script>
+    <footer class="footer">
+        <div class="copyright">
+           <b> &copy; 2024 UltimateMello. All rights reserved. </b>
+        </div>
+    </footer>
+</body>
+</html>
